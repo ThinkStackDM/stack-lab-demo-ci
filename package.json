@@ -1,0 +1,14 @@
+{
+  "name": "stack-lab-demo-ci",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Minimal demo workload for CI caching evidence: cache-by-lockfile, Docker layer ordering, build-once.",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "test": "node src/index.js --self-test"
+  },
+  "dependencies": {
+    "left-pad": "1.3.0"
+  }
+}

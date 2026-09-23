@@ -1,0 +1,57 @@
+name: stack-lab-demo-ci
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      episode:
+        description: "Episode label for this run (ep01 | ep02-cold | ep02-repeat | ep02-warm)"
+        required: true
+        default: ep01
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Record episode label
+        run: echo "EPISODE=${{ github.event.inputs.episode || 'push' }}" >> "$GITHUB_ENV"
+
+      - name: Setup Node (cache keyed by lockfile hash)
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+          cache-dependency-path: package-lock.json
+
+      - name: Install dependencies (npm ci, cache-by-lockfile)
+        run: npm ci
+
+      - name: Run workload
+        run: npm run start
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build image (layer-ordered Dockerfile, build-once via GHA cache)
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: false
+          load: true
+          tags: stack-lab-demo-ci:${{ github.run_id }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Run built image
+        run: docker run --rm stack-lab-demo-ci:${{ github.run_id }}
+
+      - name: Episode receipt
+        run: |
+          echo "episode=$EPISODE" 
+          echo "run_id=${{ github.run_id }}"
+          echo "run_attempt=${{ github.run_attempt }}"
+          echo "sha=${{ github.sha }}"
