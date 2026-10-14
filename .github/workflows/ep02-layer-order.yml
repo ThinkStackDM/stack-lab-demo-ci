@@ -1,0 +1,24 @@
+name: ep02-layer-order
+on:
+  workflow_dispatch:
+jobs:
+  layers:
+    runs-on: ubuntu-latest
+    env:
+      DOCKER_BUILDKIT: "1"
+    steps:
+      - uses: actions/checkout@v4
+      - name: "A1 copy-all: first build"
+        run: docker build --progress=plain -f Dockerfile.copy-all -t ep02-a .
+      - name: "Edit one source comment"
+        run: echo '// ep02 edit' >> src/index.js
+      - name: "A2 copy-all: rebuild after source edit"
+        run: docker build --progress=plain -f Dockerfile.copy-all -t ep02-a .
+      - name: "Reset source"
+        run: git checkout -- src/index.js
+      - name: "B1 ordered: first build"
+        run: docker build --progress=plain -f Dockerfile -t ep02-b .
+      - name: "Edit one source comment (again)"
+        run: echo '// ep02 edit' >> src/index.js
+      - name: "B2 ordered: rebuild after source edit"
+        run: docker build --progress=plain -f Dockerfile -t ep02-b .
